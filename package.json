@@ -1,0 +1,26 @@
+{
+  "name": "dsh-better-subagents",
+  "description": "Authoritative model profiles for DeepSeek Harness subagent delegation: enriches the native list_subagent_models tool result with Artificial Analysis scores, real USD token prices, context window, speed and reasoning levels",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "engines": { "node": ">=20.19.0" },
+  "repository": { "type": "git", "url": "git+https://github.com/Pheobe-Southwood/dsh-better-subagents.git" },
+  "bugs": { "url": "https://github.com/Pheobe-Southwood/dsh-better-subagents/issues" },
+  "homepage": "https://github.com/Pheobe-Southwood/dsh-better-subagents#readme",
+  "keywords": ["deepseek-harness", "dsh", "subagent", "llm", "model-selection", "cordis"],
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
+  "peerDependencies": { "@deepseek-ai/cordis": "^4.0.2" },
+  "license": "MIT",
+  "files": ["cordis.patch.yml", "lib", "bin", "data", "README.md", "CONTEXT.md", "docs", "NOTICE", "LICENSE"],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "test:mount": "node test/mount-check.mjs",
+    "test:pack": "node test/package.mjs",
+    "sync:aa": "node bin/sync-aa.mjs"
+  }
+}

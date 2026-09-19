@@ -1,0 +1,9 @@
+# Dependencies. The plugin itself ships none: the harness supplies schemastery
+# and pi-ai from its own module graph. A local checkout may symlink this path at
+# a DSH install so the test suite can resolve them.
+node_modules
+node_modules/
+*.log
+.DS_Store
+# Artificial Analysis data is never redistributed; a synced snapshot stays local.
+data/aa-snapshot.json

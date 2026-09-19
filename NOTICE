@@ -1,0 +1,53 @@
+dsh-better-subagents
+Copyright (c) 2026 Pheobe-Southwood
+
+This package contains no third-party code and vendors no third-party data:
+every line of lib/ is original to this repository. The notices below cover the
+data and services this package uses at runtime, not ported code.
+
+
+Artificial Analysis
+https://artificialanalysis.ai
+Terms of Use: https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf
+Data Platform Terms: https://artificialanalysiscdn.com/legal/ProDataPlatformTerms.pdf
+
+The intelligence, speed, latency and pricing figures this plugin shows in a
+conversation come from Artificial Analysis. No Artificial Analysis data is
+stored, bundled or redistributed by this package, and none is included in its
+source or in any published artifact: the profile is fetched at runtime and
+displayed inside the conversation, under their terms, with attribution. The
+optional local snapshot written by bin/sync-aa.mjs is a convenience for the
+machine that produced it, is git-ignored, and is never published or shipped.
+
+Every render carries the required attribution:
+
+    Source: Artificial Analysis (artificialanalysis.ai)
+
+"Artificial Analysis Intelligence Index" is Artificial Analysis's metric, and
+the index version reported with a score is theirs. This package is an
+independent consumer of their public data; no endorsement by Artificial
+Analysis is implied.
+
+
+pi-ai (@earendil-works/pi-ai)
+Copyright (c) Mario Zechner
+https://github.com/earendil-works/pi.git
+Licensed under the MIT License.
+
+The USD token rates and context windows shown for a delegation route are read at
+runtime from the pi-ai model catalogue. pi-ai is a dependency of the DeepSeek
+Harness installation, not of this package: nothing from it is vendored,
+copied or redistributed here, this package declares no dependency on it, and it
+is read strictly read-only when the harness ships it. Its own MIT terms govern
+that catalogue.
+
+
+DeepSeek Harness
+
+dsh-better-subagents is an independent community plugin for the DeepSeek
+Harness. It is not affiliated with, sponsored by or endorsed by DeepSeek; the
+name is used only to state the platform this package is compatible with.
+
+
+dsh-better-subagents is distributed under the MIT License. The complete
+copyright and permission notice is in LICENSE.
