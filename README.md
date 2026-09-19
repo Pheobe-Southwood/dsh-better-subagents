@@ -309,8 +309,25 @@ time. The optional local snapshot written by `bin/sync-aa.mjs` is gitignored
 ```bash
 npm test              # node --test test/*.test.mjs
 npm run test:mount    # bundle-wiring check (row id/name parity, README warning)
+npm run test:pack     # npm-pack allowlist: NOTICE, docs and every lib module must ship
 npm run sync:aa       # optional: write a local AA snapshot (needs an AA key)
 ```
+
+The plugin itself has **no dependencies**: at runtime the harness supplies
+`@deepseek-ai/schemastery` and `@earendil-works/pi-ai` from its own module graph,
+and the profile's installer links them into the package directory (`pnpm` writes
+a `node_modules` symlink there for exactly that reason). Two things follow for
+local work:
+
+- run the suite from a checkout that can resolve those packages. Point a
+  `node_modules` symlink at a DSH install
+  (`ln -s /path/to/dsh/node_modules node_modules`), or simply work inside an
+  installed profile. Without it, the two suites that import the real config
+  schema cannot load and `npm test` reports them as failed files.
+- `pnpm` prints `missing peer @deepseek-ai/cordis` during install. That is
+  informational, not a fault: this is the same declaration the other DSH plugins
+  in this workspace ship, and the harness provides cordis to a mounted plugin at
+  runtime rather than through the profile's dependency graph.
 
 See `CONTEXT.md` for the glossary and `docs/adr/` for the design records.
 

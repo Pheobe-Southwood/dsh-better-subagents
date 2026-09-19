@@ -146,6 +146,24 @@ function countingFetch(handlers = {}) {
 }
 
 /**
+ * A fetcher that must never be reached: it records the attempt, then throws.
+ *
+ * {@link countingFetch} records an unplanned request for a later assertion;
+ * this one refuses on the spot, so an offline lookup that reaches the network
+ * even once cannot pass by happening to survive the attempt.
+ *
+ * @returns {object} Fetcher plus call-recording helpers.
+ */
+function throwingFetch() {
+  const calls = []
+  const fetchImpl = async (url) => {
+    calls.push(url)
+    throw new Error(`the network is off, so no request may leave the client (attempted ${url})`)
+  }
+  return { fetchImpl, calls, count: () => calls.length, urls: () => [...calls] }
+}
+
+/**
  * A stand-in Cordis context: `get('credentials')` answers with the harness
  * credential service shape, and `logger.info` collects the debug lines.
  *
@@ -386,6 +404,54 @@ test('timeoutMs 0 with no snapshot entry reports offline rather than pretending 
   assert.equal(result.reason, 'offline')
   assert.match(result.detail, /timeoutMs is 0/)
   assert.equal(fake.count(), 0)
+})
+
+test('timeoutMs 0 is offline even when the snapshot misses, and never a timeout', async () => {
+  // Regression pin for an ordering inside `lib/aa/client.js`: the
+  // `!networkingEnabled` branch must be tested BEFORE `budget.aborted()`.
+  // `config.timeoutMs` is the whole network budget, so 0 makes the deadline
+  // born expired; reading the abort first turns a deliberately offline lookup
+  // into `{ reason: 'timeout', detail: 'no answer within 0 ms' }`, which the
+  // renderer prints to the model as "not available: lookup timed out after
+  // 1ms". That sends the reader hunting for a network fault instead of syncing
+  // a snapshot, and it is a lie: the network was never asked.
+  //
+  // The counterpart — timeoutMs 0 WITH a matching snapshot entry still answers
+  // — is pinned by the two tests above; nothing here weakens it.
+  const fake = throwingFetch()
+  installAaFetcherForTests(fake.fetchImpl)
+  const client = createAaClient({ config: config({ timeoutMs: 0 }), ctx: fakeCtx({ credentials: credentialService(KEY) }) })
+
+  const result = await client.lookup('test-provider', MODEL)
+
+  assert.equal(result.ok, false)
+  assert.equal(
+    result.reason,
+    'offline',
+    'a zero budget is offline, not a timeout: config.timeoutMs 0 switches the network OFF, so the born-expired deadline must be reported as "offline"',
+  )
+  assert.notEqual(
+    result.reason,
+    'timeout',
+    'config.timeoutMs 0 must never surface as a timeout: "timed out" tells the caller to wait or retry a network that was switched off on purpose',
+  )
+  assert.match(result.detail, /network lookup is off/, 'the detail must say the network is off')
+  assert.match(
+    result.detail,
+    /local snapshot had no entry/,
+    'the detail must name the source that was consulted and came up empty, so the fix is "sync a snapshot"',
+  )
+  assert.doesNotMatch(
+    result.detail,
+    /timed out|no answer within/,
+    'the offline detail must not claim a timeout: offline mode issues no request, so nothing could time out',
+  )
+  assert.equal(
+    fake.count(),
+    0,
+    'offline mode must not touch the network even to fail: the fetcher throws, so one attempt would fail this lookup differently',
+  )
+  assert.deepEqual(fake.urls(), [])
 })
 
 test('a snapshot miss falls through to the page route and is attributed to the page', async () => {
