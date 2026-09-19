@@ -126,9 +126,6 @@ dsh --profile web --dump-config | grep -A 1 '== dsh-better-subagents'
 # a local checkout (the mount is identical, only the spec differs)
 dsh plugin --profile web add link:/path/to/dsh-better-subagents
 
-# from npm (requires the package to be published first)
-dsh plugin --profile web add dsh-better-subagents
-
 # from a tarball built in this repository
 npm pack
 dsh plugin --profile web add ./dsh-better-subagents-0.1.0.tgz
@@ -217,13 +214,15 @@ write is exactly what gets rendered.
 
 `qwen3.8-flash` does not exist on Artificial Analysis. The production model is
 published there as **`qwen3-8-flash-next`**; without the mapping, the lookup
-404s. This repository carries the one-line alias in `data/aliases.json`:
+404s. `deepseek-flash` is the same story — Artificial Analysis publishes it as
+**`deepseek-v4-1-flash`**. This repository carries those aliases in
+`data/aliases.json`:
 
 ```json
 {
   "version": 1,
   "note": "Local model id -> Artificial Analysis model slug. These are our own name mappings, not Artificial Analysis data.",
-  "aliases": { "qwen3.8-flash": "qwen3-8-flash-next" }
+  "aliases": { "qwen3.8-flash": "qwen3-8-flash-next", "deepseek-flash": "deepseek-v4-1-flash" }
 }
 ```
 
@@ -338,18 +337,6 @@ local work:
   runtime rather than through the profile's dependency graph.
 
 See `CONTEXT.md` for the glossary and `docs/adr/` for the design records.
-
-### Publish to npm
-
-`npm publish` runs the `prepublishOnly` gate first, which replays the whole
-suite — `npm test`, the mount check and the pack allowlist — so a red suite
-cannot reach the registry. After publishing, the npm package and this GitHub
-repository are both valid install specs for the same plugin:
-
-```bash
-dsh plugin --profile web add dsh-better-subagents
-dsh plugin --profile web add github:Pheobe-Southwood/dsh-better-subagents
-```
 
 ## License and attribution
 

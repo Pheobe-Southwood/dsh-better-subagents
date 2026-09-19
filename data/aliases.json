@@ -1,5 +1,5 @@
 {
   "version": 1,
   "note": "Local model id -> Artificial Analysis model slug. These are our own name mappings, not Artificial Analysis data.",
-  "aliases": { "qwen3.8-flash": "qwen3-8-flash-next" }
+  "aliases": { "qwen3.8-flash": "qwen3-8-flash-next", "deepseek-flash": "deepseek-v4-1-flash" }
 }

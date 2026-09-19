@@ -8,6 +8,7 @@ import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
 import { aaSlugCandidates, loadAliases, normalizeModelId } from '../lib/model-id.js'
@@ -49,6 +50,18 @@ test('aaSlugCandidates puts the shipped alias first', () => {
   const candidates = aaSlugCandidates('qwen3.8-flash')
   assert.equal(candidates[0], 'qwen3-8-flash-next', 'the alias must be probed before the literal id')
   assert.ok(candidates.includes('qwen3-8-flash'), 'the literal form is still probed')
+})
+
+test('the shipped alias table carries both production mappings', () => {
+  const shipped = loadAliases(fileURLToPath(new URL('../data/aliases.json', import.meta.url)))
+  assert.equal(shipped['qwen3.8-flash'], 'qwen3-8-flash-next')
+  assert.equal(shipped['deepseek-flash'], 'deepseek-v4-1-flash')
+})
+
+test('aaSlugCandidates puts the deepseek alias first', () => {
+  const candidates = aaSlugCandidates('deepseek-flash')
+  assert.equal(candidates[0], 'deepseek-v4-1-flash', 'the alias must be probed before the literal id')
+  assert.ok(candidates.includes('deepseek-flash'), 'the literal form is still probed')
 })
 
 test('aaSlugCandidates keeps identity first when no alias exists', () => {
