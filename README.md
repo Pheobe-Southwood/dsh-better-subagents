@@ -311,7 +311,15 @@ npm test              # node --test test/*.test.mjs
 npm run test:mount    # bundle-wiring check (row id/name parity, README warning)
 npm run test:pack     # npm-pack allowlist: NOTICE, docs and every lib module must ship
 npm run sync:aa       # optional: write a local AA snapshot (needs an AA key)
+node test/live-probe.mjs   # MANUAL: one real Artificial Analysis lookup, not part of npm test
 ```
+
+`test/live-probe.mjs` is a manual diagnostic, deliberately outside the
+`test/*.test.mjs` glob so it never runs in CI: it performs one real network
+request to `artificialanalysis.ai` and prints the enriched tool result exactly
+as a model would see it. `node test/live-probe.mjs --offline` runs the same
+path with the network switched off (`timeoutMs: 0`), which should report the
+honest `offline` miss when no snapshot has been synced.
 
 The plugin itself has **no dependencies**: at runtime the harness supplies
 `@deepseek-ai/schemastery` and `@earendil-works/pi-ai` from its own module graph,
@@ -330,6 +338,18 @@ local work:
   runtime rather than through the profile's dependency graph.
 
 See `CONTEXT.md` for the glossary and `docs/adr/` for the design records.
+
+### Publish to npm
+
+`npm publish` runs the `prepublishOnly` gate first, which replays the whole
+suite — `npm test`, the mount check and the pack allowlist — so a red suite
+cannot reach the registry. After publishing, the npm package and this GitHub
+repository are both valid install specs for the same plugin:
+
+```bash
+dsh plugin --profile web add dsh-better-subagents
+dsh plugin --profile web add github:Pheobe-Southwood/dsh-better-subagents
+```
 
 ## License and attribution
 

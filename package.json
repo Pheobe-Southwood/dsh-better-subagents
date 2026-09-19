@@ -21,6 +21,7 @@
     "test": "node --test test/*.test.mjs",
     "test:mount": "node test/mount-check.mjs",
     "test:pack": "node test/package.mjs",
+    "prepublishOnly": "npm test && npm run test:mount && npm run test:pack",
     "sync:aa": "node bin/sync-aa.mjs"
   }
 }
