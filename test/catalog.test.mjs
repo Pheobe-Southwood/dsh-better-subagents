@@ -338,12 +338,24 @@ test('an AA failure is rendered as a human reason with the budget when known', (
 })
 
 test('every documented AA failure reason renders readable text', () => {
-  for (const reason of ['timeout', 'not-on-aa', 'key-invalid', 'tier', 'rate-limited', 'http', 'unavailable', 'disabled']) {
+  for (const reason of ['timeout', 'not-on-aa', 'key-invalid', 'tier', 'rate-limited', 'http', 'unavailable', 'disabled', 'offline']) {
     const profile = mergeProfile({ provider: 'p', model: 'm', aa: { ok: false, reason } })
     const text = render(profile, { isSingle: true })
     assert.match(text, /not available: /, `reason ${reason} must render`)
     assert.ok(!text.includes('undefined'), `reason ${reason} must not leak undefined`)
   }
+})
+
+test('offline mode is never described as a timeout', () => {
+  // `config.timeoutMs: 0` switches the network off; it is a configuration, not a
+  // slow network, so the model-facing line must send the operator to their
+  // snapshot rather than to a timeout knob they never exceeded. A zero budget
+  // passing through the timeout wording is the exact symptom this guards.
+  const profile = mergeProfile({ provider: 'p', model: 'm', aa: { ok: false, reason: 'offline' } })
+  const text = render(profile, { isSingle: true })
+  assert.match(text, /not in the local snapshot/, 'offline names the local snapshot as the missing source')
+  assert.doesNotMatch(text, /timed out|no answer within/, 'a zero budget must never read as a timeout')
+  assert.doesNotMatch(text, /after 0ms|after 1ms/, 'no fabricated millisecond figure')
 })
 
 test('formatProfileLines is total', () => {

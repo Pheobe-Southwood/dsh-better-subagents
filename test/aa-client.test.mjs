@@ -407,14 +407,16 @@ test('timeoutMs 0 with no snapshot entry reports offline rather than pretending 
 })
 
 test('timeoutMs 0 is offline even when the snapshot misses, and never a timeout', async () => {
-  // Regression pin for an ordering inside `lib/aa/client.js`: the
-  // `!networkingEnabled` branch must be tested BEFORE `budget.aborted()`.
-  // `config.timeoutMs` is the whole network budget, so 0 makes the deadline
-  // born expired; reading the abort first turns a deliberately offline lookup
-  // into `{ reason: 'timeout', detail: 'no answer within 0 ms' }`, which the
-  // renderer prints to the model as "not available: lookup timed out after
-  // 1ms". That sends the reader hunting for a network fault instead of syncing
-  // a snapshot, and it is a lie: the network was never asked.
+  // Regression pin for the ordering inside `lib/aa/client.js`: the
+  // `!networkingEnabled` branch is tested BEFORE `budget.aborted()`.
+  // `config.timeoutMs` is the whole network budget, and 0 is documented as
+  // "network off" rather than "no time left". Reporting that configuration as
+  // `{ reason: 'timeout', detail: 'no answer within 0 ms' }` sends the reader
+  // hunting for a network fault — and, together with the born-expired deadline
+  // a zero budget used to build, the renderer prints it as "not available:
+  // lookup timed out after 1ms" — when the truthful answer is that the local
+  // snapshot simply had no entry. Nothing was asked of the network, so nothing
+  // could time out: the offline branch must stay ABOVE the abort check.
   //
   // The counterpart — timeoutMs 0 WITH a matching snapshot entry still answers
   // — is pinned by the two tests above; nothing here weakens it.
@@ -452,6 +454,40 @@ test('timeoutMs 0 is offline even when the snapshot misses, and never a timeout'
     'offline mode must not touch the network even to fail: the fetcher throws, so one attempt would fail this lookup differently',
   )
   assert.deepEqual(fake.urls(), [])
+})
+
+test('timeoutMs 0 answers offline for an already-aborted caller, not a timeout', async () => {
+  // The same ordering, in the ONE case where `budget.aborted()` is true on a
+  // zero budget: `createBudget()` builds no timeout signal when
+  // `config.timeoutMs` is 0, so only the caller's own signal can already be
+  // aborted. Nothing was ever going to be requested, so there is no deadline
+  // to exceed and no work to cancel — "timeout" (or "aborted by the caller")
+  // would describe a budget that never existed. This is what makes the
+  // ordering load-bearing rather than merely defensive: move the offline
+  // branch below the abort check and this lookup reports `timeout` again.
+  const fake = throwingFetch()
+  installAaFetcherForTests(fake.fetchImpl)
+  const client = createAaClient({
+    config: config({ timeoutMs: 0 }),
+    ctx: fakeCtx({ credentials: credentialService(KEY) }),
+    signal: AbortSignal.abort(),
+  })
+
+  const result = await client.lookup('test-provider', MODEL)
+
+  assert.equal(result.ok, false)
+  assert.equal(
+    result.reason,
+    'offline',
+    'a zero budget is still offline when the caller already aborted: the network was switched off before the caller spoke, so no deadline ever ran and none may be reported',
+  )
+  assert.notEqual(
+    result.reason,
+    'timeout',
+    'an aborted caller must not turn a switched-off network into a timeout: offline mode made no request, so there was nothing to abort or to wait for',
+  )
+  assert.match(result.detail, /network lookup is off/, 'the detail must still say the network is off')
+  assert.equal(fake.count(), 0, 'a caller abort must not cause a request either')
 })
 
 test('a snapshot miss falls through to the page route and is attributed to the page', async () => {
